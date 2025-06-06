@@ -1,0 +1,282 @@
+[
+  {
+    "id": 1,
+    "productId": 1,
+    "product": {
+      "id": 1,
+      "name": "Product 1",
+      "category": "Sunflower",
+      "unit_type": "kg"
+    },
+    "baseRate": 130,
+    "conversionFactor": 30,
+    "effectiveDate": "2025-06-06T06:17:36.106Z",
+    "unitPrice": 3900
+  },
+  {
+    "id": 2,
+    "productId": 2,
+    "product": {
+      "id": 2,
+      "name": "Product 2",
+      "category": "Sunflower",
+      "unit_type": "kg"
+    },
+    "baseRate": 130,
+    "conversionFactor": 15,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 1950
+  },
+  {
+    "id": 3,
+    "productId": 3,
+    "product": {
+      "id": 3,
+      "name": "Product 3",
+      "category": "Sunflower",
+      "unit_type": "L"
+    },
+    "baseRate": 130,
+    "conversionFactor": 13.6,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 1768
+  },
+  {
+    "id": 4,
+    "productId": 4,
+    "product": {
+      "id": 4,
+      "name": "Product 4",
+      "category": "Sunflower",
+      "unit_type": "L"
+    },
+    "baseRate": 130,
+    "conversionFactor": 4.5,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 585
+  },
+  {
+    "id": 5,
+    "productId": 5,
+    "product": {
+      "id": 5,
+      "name": "Product 5",
+      "category": "Sunflower",
+      "unit_type": "L"
+    },
+    "baseRate": 130,
+    "conversionFactor": 0.9,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 117
+  },
+  {
+    "id": 6,
+    "productId": 6,
+    "product": {
+      "id": 6,
+      "name": "Product 6",
+      "category": "Sunflower",
+      "unit_type": "L"
+    },
+    "baseRate": 130,
+    "conversionFactor": 0.45,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 58.5
+  },
+  {
+    "id": 7,
+    "productId": 7,
+    "product": {
+      "id": 7,
+      "name": "Product 7",
+      "category": "Sunflower",
+      "unit_type": "L"
+    },
+    "baseRate": 130,
+    "conversionFactor": 0.18,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 23.4
+  },
+  {
+    "id": 8,
+    "productId": 8,
+    "product": {
+      "id": 8,
+      "name": "Product 8",
+      "category": "Sunflower",
+      "unit_type": "L"
+    },
+    "baseRate": 130,
+    "conversionFactor": 0.85,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 110.5
+  },
+  {
+    "id": 9,
+    "productId": 9,
+    "product": {
+      "id": 9,
+      "name": "Product 9",
+      "category": "Sunflower",
+      "unit_type": "L"
+    },
+    "baseRate": 130,
+    "conversionFactor": 0.425,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 55.25
+  },
+  {
+    "id": 10,
+    "productId": 10,
+    "product": {
+      "id": 10,
+      "name": "Product 10",
+      "category": "Palm",
+      "unit_type": "kg"
+    },
+    "baseRate": 95,
+    "conversionFactor": 30,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 2850
+  },
+  {
+    "id": 11,
+    "productId": 11,
+    "product": {
+      "id": 11,
+      "name": "Product 11",
+      "category": "Palm",
+      "unit_type": "kg"
+    },
+    "baseRate": 95,
+    "conversionFactor": 15,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 1425
+  },
+  {
+    "id": 12,
+    "productId": 12,
+    "product": {
+      "id": 12,
+      "name": "Product 12",
+      "category": "Palm",
+      "unit_type": "L"
+    },
+    "baseRate": 95,
+    "conversionFactor": 13.6,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 1292
+  },
+  {
+    "id": 13,
+    "productId": 13,
+    "product": {
+      "id": 13,
+      "name": "Product 13",
+      "category": "Palm",
+      "unit_type": "L"
+    },
+    "baseRate": 95,
+    "conversionFactor": 4.5,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 427.5
+  },
+  {
+    "id": 14,
+    "productId": 14,
+    "product": {
+      "id": 14,
+      "name": "Product 14",
+      "category": "Palm",
+      "unit_type": "L"
+    },
+    "baseRate": 95,
+    "conversionFactor": 0.9,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 85.5
+  },
+  {
+    "id": 15,
+    "productId": 15,
+    "product": {
+      "id": 15,
+      "name": "Product 15",
+      "category": "Palm",
+      "unit_type": "L"
+    },
+    "baseRate": 95,
+    "conversionFactor": 0.45,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 42.75
+  },
+  {
+    "id": 16,
+    "productId": 16,
+    "product": {
+      "id": 16,
+      "name": "Product 16",
+      "category": "Palm",
+      "unit_type": "L"
+    },
+    "baseRate": 95,
+    "conversionFactor": 0.18,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 17.099999999999998
+  },
+  {
+    "id": 17,
+    "productId": 17,
+    "product": {
+      "id": 17,
+      "name": "Product 17",
+      "category": "Lamp",
+      "unit_type": "L"
+    },
+    "baseRate": 90,
+    "conversionFactor": 0.85,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 76.5
+  },
+  {
+    "id": 18,
+    "productId": 18,
+    "product": {
+      "id": 18,
+      "name": "Product 18",
+      "category": "Lamp",
+      "unit_type": "L"
+    },
+    "baseRate": 90,
+    "conversionFactor": 0.425,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 38.25
+  },
+  {
+    "id": 19,
+    "productId": 19,
+    "product": {
+      "id": 19,
+      "name": "Product 19",
+      "category": "Lamp",
+      "unit_type": "L"
+    },
+    "baseRate": 90,
+    "conversionFactor": 30,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 2700
+  },
+  {
+    "id": 20,
+    "productId": 20,
+    "product": {
+      "id": 20,
+      "name": "Product 20",
+      "category": "Lamp",
+      "unit_type": "L"
+    },
+    "baseRate": 90,
+    "conversionFactor": 15,
+    "effectiveDate": "2025-06-06T06:17:35.833Z",
+    "unitPrice": 1350
+  }
+]

@@ -6,9 +6,12 @@
       "date": "2025-06-06",
       "opening": 6,
       "receipts": 0,
-      "sales_office": 0,
+      "sales_office": 5,
       "dispatch": 0,
-      "vehicleSales": {}
+      "vehicleSales": {
+        "4080": 1
+      },
+      "updated_at": "2025-06-06T06:17:34.252Z"
     },
     {
       "id": 2,

@@ -1,0 +1,40 @@
+{
+  "2025-06-06": [
+    {
+      "id": 1749190656978,
+      "date": "2025-06-06",
+      "line": "Uthukottai",
+      "vehicle": "2259",
+      "created_at": "2025-06-06T06:17:36.978Z",
+      "products": [
+        {
+          "productId": 1,
+          "quantity": 2,
+          "name": "Product 1",
+          "category": "Unknown"
+        },
+        {
+          "productId": 2,
+          "quantity": 3,
+          "name": "Product 2",
+          "category": "Unknown"
+        }
+      ]
+    },
+    {
+      "id": 1749190657252,
+      "date": "2025-06-06",
+      "line": "Ponneri",
+      "vehicle": "4080",
+      "created_at": "2025-06-06T06:17:37.252Z",
+      "products": [
+        {
+          "productId": 1,
+          "quantity": 2,
+          "name": "Product 1",
+          "category": "Unknown"
+        }
+      ]
+    }
+  ]
+}
