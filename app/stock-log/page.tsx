@@ -350,7 +350,7 @@ export default function StockLogPage() {
                   </TableRow>
                 ) : (
                   filteredStockData.map((item) => (
-                    <TableRow key={item.productId}>
+                    <TableRow key={item.product_id}>
                       <TableCell className="font-medium">{item.product}</TableCell>
                       <TableCell className="text-right">{item.opening}</TableCell>
                       {activeTab === "receipts" && (
@@ -359,7 +359,7 @@ export default function StockLogPage() {
                             type="number"
                             min="0"
                             value={item.receipts || ""}
-                            onChange={(e) => handleReceiptsChange(item.productId, e.target.value)}
+                            onChange={(e) => handleReceiptsChange(item.product_id, e.target.value)}
                             className="h-8 w-20 text-right"
                           />
                         </TableCell>
@@ -385,7 +385,7 @@ export default function StockLogPage() {
                               type="number"
                               min="0"
                               value={item.salesOffice || ""}
-                              onChange={(e) => handleOfficeSalesChange(item.productId, e.target.value)}
+                              onChange={(e) => handleOfficeSalesChange(item.product_id, e.target.value)}
                               className="h-8 w-20 text-right"
                             />
                           </TableCell>
