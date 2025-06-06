@@ -1,8 +1,17 @@
 "use client"
 
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { createContext, useContext, ReactNode } from "react"
+import useSWR from 'swr'
 
-// Product types with their conversion factors
+// Fetcher function for SWR
+const fetcher = (url: string) => fetch(url).then(res => {
+  if (!res.ok) {
+    throw new Error('Failed to fetch data')
+  }
+  return res.json()
+})
+
+// Product types with their conversion factors (for reference)
 export const products = [
   { id: 1, name: "Sunflower Oil 30kg Can", conversionFactor: 30, unitType: "kg", category: "Sunflower" },
   { id: 2, name: "Sunflower Oil 15kg Can", conversionFactor: 15, unitType: "kg", category: "Sunflower" },
@@ -32,47 +41,36 @@ export const routes = ["Uthukottai", "Arakonam", "Acharapakkam", "Kalpakkam", "P
 // Vehicle numbers
 export const vehicles = ["2259", "5149", "3083", "4080", "0456", "4567"]
 
-// Initial stock data
-const initialStockData = products.map((product) => ({
-  productId: product.id,
-  opening: Math.floor(Math.random() * 30) + 5, // Random opening balance between 5-35
-  receipts: 0,
-  salesOffice: 0,
-  dispatch: 0,
-  baseRate: product.category === "Sunflower" ? 130 : product.category === "Palm" ? 95 : 90, // Per kg/L rate
-  vehicleSales: {}, // Will store sales by vehicle number: { "2259": 5, "3083": 3 }
-}))
-
-// Initial price data
-const initialPriceData = products.map((product) => ({
-  productId: product.id,
-  baseRate: product.category === "Sunflower" ? 130 : product.category === "Palm" ? 95 : 90, // Per kg/L rate
-  conversionFactor: product.conversionFactor,
-  location: "All Locations",
-  lastUpdated: new Date().toISOString(),
-}))
-
-// Initial dispatch data
-const initialDispatchData = []
-
 // Context type
 type OilInventoryContextType = {
+  // Data from API
   stockData: any[]
   priceData: any[]
   dispatchData: any[]
-  updateStockSalesOffice: (productId: number, sales: number) => void
-  updateStockSalesVehicle: (productId: number, vehicle: string, sales: number) => void
-  updateStockReceipts: (productId: number, receipts: number) => void
-  updatePrice: (productId: number, baseRate: number, conversionFactor: number) => void
+  isLoading: boolean
+  error: any
+
+  // Functions to update data
+  updateStockSalesOffice: (productId: number, sales: number) => Promise<void>
+  updateStockSalesVehicle: (productId: number, vehicle: string, sales: number) => Promise<void>
+  updateStockReceipts: (productId: number, receipts: number) => Promise<void>
+  updatePrice: (productId: number, baseRate: number, conversionFactor: number) => Promise<void>
   addDispatchEntry: (
     line: string,
     vehicle: string,
     productQuantities: { productId: number; quantity: number }[],
-  ) => void
+  ) => Promise<void>
+  
+  // Helper functions
   getDispatchedVehicles: () => string[]
   getVehicleDispatchData: () => any
   getCurrentTimestamp: () => string
   getFormattedDate: (date?: Date) => string
+  
+  // Mutate functions to refresh data
+  mutateStockData: () => void
+  mutatePriceData: () => void
+  mutateDispatchData: () => void
 }
 
 // Create context
@@ -80,69 +78,167 @@ const OilInventoryContext = createContext<OilInventoryContextType | undefined>(u
 
 // Provider component
 export function OilInventoryProvider({ children }: { children: ReactNode }) {
-  const [stockData, setStockData] = useState(initialStockData)
-  const [priceData, setPriceData] = useState(initialPriceData)
-  const [dispatchData, setDispatchData] = useState(initialDispatchData)
+  const currentDate = new Date().toISOString().split('T')[0]
+
+  // Fetch data using SWR
+  const { data: stockData = [], error: stockError, mutate: mutateStockData } = useSWR(
+    `/api/stock-log?date=${currentDate}`,
+    fetcher
+  )
+  
+  const { data: priceData = [], error: priceError, mutate: mutatePriceData } = useSWR(
+    '/api/prices',
+    fetcher
+  )
+  
+  const { data: dispatchData = [], error: dispatchError, mutate: mutateDispatchData } = useSWR(
+    `/api/dispatch-log?date=${currentDate}`,
+    fetcher
+  )
+
+  const isLoading = !stockData && !priceData && !dispatchData
+  const error = stockError || priceError || dispatchError
 
   // Update stock sales for office
-  const updateStockSalesOffice = (productId: number, sales: number) => {
-    setStockData((prev) =>
-      prev.map((item) => (item.productId === productId ? { ...item, salesOffice: Number(sales) } : item)),
-    )
+  const updateStockSalesOffice = async (productId: number, sales: number) => {
+    try {
+      const response = await fetch('/api/stock-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: productId,
+          date: currentDate,
+          field: 'sales_office',
+          value: sales
+        })
+      })
+      
+      if (!response.ok) throw new Error('Failed to update office sales')
+      mutateStockData()
+    } catch (error) {
+      console.error('Error updating office sales:', error)
+      throw error
+    }
   }
 
   // Update stock sales for a specific vehicle
-  const updateStockSalesVehicle = (productId: number, vehicle: string, sales: number) => {
-    setStockData((prev) =>
-      prev.map((item) => {
-        if (item.productId === productId) {
-          const updatedVehicleSales = { ...item.vehicleSales, [vehicle]: Number(sales) }
-          return { ...item, vehicleSales: updatedVehicleSales }
-        }
-        return item
-      }),
-    )
+  const updateStockSalesVehicle = async (productId: number, vehicle: string, sales: number) => {
+    try {
+      // Find the stock log entry for this product and date
+      const stockEntry = stockData.find(item => item.product_id === productId)
+      if (!stockEntry) {
+        throw new Error('Stock entry not found')
+      }
+
+      const response = await fetch('/api/vehicle-sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stock_log_id: stockEntry.id,
+          vehicle_number: vehicle,
+          quantity: sales
+        })
+      })
+      
+      if (!response.ok) throw new Error('Failed to update vehicle sales')
+      mutateStockData()
+    } catch (error) {
+      console.error('Error updating vehicle sales:', error)
+      throw error
+    }
   }
 
   // Update stock receipts
-  const updateStockReceipts = (productId: number, receipts: number) => {
-    setStockData((prev) =>
-      prev.map((item) => (item.productId === productId ? { ...item, receipts: Number(receipts) } : item)),
-    )
+  const updateStockReceipts = async (productId: number, receipts: number) => {
+    try {
+      const response = await fetch('/api/stock-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: productId,
+          date: currentDate,
+          field: 'receipts',
+          value: receipts
+        })
+      })
+      
+      if (!response.ok) throw new Error('Failed to update receipts')
+      mutateStockData()
+    } catch (error) {
+      console.error('Error updating receipts:', error)
+      throw error
+    }
   }
 
   // Update price
-  const updatePrice = (productId: number, baseRate: number, conversionFactor: number) => {
-    setPriceData((prev) =>
-      prev.map((item) =>
-        item.productId === productId
-          ? {
-              ...item,
-              baseRate: Number(baseRate),
-              conversionFactor: Number(conversionFactor),
-              lastUpdated: new Date().toISOString(),
-            }
-          : item,
-      ),
-    )
+  const updatePrice = async (productId: number, baseRate: number, conversionFactor: number) => {
+    try {
+      const response = await fetch('/api/prices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: productId,
+          base_rate: baseRate,
+          conversion_factor: conversionFactor
+        })
+      })
+      
+      if (!response.ok) throw new Error('Failed to update price')
+      mutatePriceData()
+    } catch (error) {
+      console.error('Error updating price:', error)
+      throw error
+    }
+  }
+
+  // Add dispatch entry
+  const addDispatchEntry = async (
+    line: string,
+    vehicle: string,
+    productQuantities: { productId: number; quantity: number }[],
+  ) => {
+    try {
+      const validProductQuantities = productQuantities.filter((pq) => pq.quantity > 0)
+      
+      if (validProductQuantities.length === 0) return
+
+      const response = await fetch('/api/dispatch-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          route_name: line,
+          vehicle_number: vehicle,
+          products: validProductQuantities,
+          date: currentDate
+        })
+      })
+      
+      if (!response.ok) throw new Error('Failed to add dispatch entry')
+      
+      // Refresh both dispatch and stock data
+      mutateDispatchData()
+      mutateStockData()
+    } catch (error) {
+      console.error('Error adding dispatch entry:', error)
+      throw error
+    }
   }
 
   // Get list of vehicles that have been dispatched today
   const getDispatchedVehicles = () => {
-    return [...new Set(dispatchData.map((entry) => entry.vehicle))]
+    return [...new Set(dispatchData.map((entry: any) => entry.vehicle))]
   }
 
   // Get vehicle dispatch data for the grid view
   const getVehicleDispatchData = () => {
-    // Get all dispatched vehicles
-    const dispatchedVehicles = [...new Set(dispatchData.map((entry) => entry.vehicle))].sort()
+    const dispatchedVehicles = [...new Set(dispatchData.map((entry: any) => entry.vehicle))].sort()
 
     if (dispatchedVehicles.length === 0) return { vehicles: [], productRows: [], vehicleTotals: {} }
 
     // Get all products that have been dispatched
     const dispatchedProductIds = new Set()
-    dispatchData.forEach((entry) => {
-      entry.products.forEach((p) => dispatchedProductIds.add(p.productId))
+    dispatchData.forEach((entry: any) => {
+      entry.products.forEach((p: any) => dispatchedProductIds.add(p.productId))
     })
 
     // Create product rows with quantities for each vehicle
@@ -156,9 +252,9 @@ export function OilInventoryProvider({ children }: { children: ReactNode }) {
 
         dispatchedVehicles.forEach((vehicle) => {
           const quantity = dispatchData
-            .filter((entry) => entry.vehicle === vehicle)
-            .reduce((sum, entry) => {
-              const productEntry = entry.products.find((p) => p.productId === productId)
+            .filter((entry: any) => entry.vehicle === vehicle)
+            .reduce((sum: number, entry: any) => {
+              const productEntry = entry.products.find((p: any) => p.productId === productId)
               return sum + (productEntry ? productEntry.quantity : 0)
             }, 0)
 
@@ -193,36 +289,6 @@ export function OilInventoryProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Add dispatch entry
-  const addDispatchEntry = (
-    line: string,
-    vehicle: string,
-    productQuantities: { productId: number; quantity: number }[],
-  ) => {
-    // Filter out products with zero quantity
-    const validProductQuantities = productQuantities.filter((pq) => pq.quantity > 0)
-
-    if (validProductQuantities.length === 0) return
-
-    const newEntry = {
-      id: Date.now(),
-      date: new Date().toISOString(),
-      line,
-      vehicle,
-      products: validProductQuantities,
-    }
-
-    setDispatchData((prev) => [newEntry, ...prev])
-
-    // Update stock dispatch values
-    setStockData((prev) =>
-      prev.map((item) => {
-        const dispatchItem = validProductQuantities.find((pq) => pq.productId === item.productId)
-        return dispatchItem ? { ...item, dispatch: item.dispatch + Number(dispatchItem.quantity) } : item
-      }),
-    )
-  }
-
   // Get current timestamp in HH:MM format
   const getCurrentTimestamp = () => {
     const now = new Date()
@@ -242,6 +308,8 @@ export function OilInventoryProvider({ children }: { children: ReactNode }) {
         stockData,
         priceData,
         dispatchData,
+        isLoading,
+        error,
         updateStockSalesOffice,
         updateStockSalesVehicle,
         updateStockReceipts,
@@ -251,6 +319,9 @@ export function OilInventoryProvider({ children }: { children: ReactNode }) {
         getVehicleDispatchData,
         getCurrentTimestamp,
         getFormattedDate,
+        mutateStockData,
+        mutatePriceData,
+        mutateDispatchData,
       }}
     >
       {children}
