@@ -1,24 +1,19 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+
+const defaultVehicles = [
+  { id: 1, number: '2259', is_active: true },
+  { id: 2, number: '5149', is_active: true },
+  { id: 3, number: '3083', is_active: true },
+  { id: 4, number: '4080', is_active: true },
+  { id: 5, number: '0456', is_active: true },
+  { id: 6, number: '4567', is_active: true }
+]
 
 export async function GET() {
-  const supabase = createClient()
-  
   try {
-    const { data: vehicles, error } = await supabase
-      .from('vehicles')
-      .select('*')
-      .eq('is_active', true)
-      .order('number', { ascending: true })
-
-    if (error) {
-      console.error('Error fetching vehicles:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    return NextResponse.json(vehicles)
+    return NextResponse.json(defaultVehicles.filter(v => v.is_active))
   } catch (error) {
-    console.error('Unexpected error:', error)
+    console.error('Error fetching vehicles:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
