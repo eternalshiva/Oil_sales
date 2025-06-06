@@ -53,26 +53,28 @@ export default function StockLogPage() {
 
   // Process stock data with product details
   const processedStockData = stockData.map((item) => {
-    const product = products.find((p) => p.id === item.productId)
-    const priceItem = priceData.find((p) => p.productId === item.productId)
+    const product = products.find((p) => p.id === item.product_id) // Updated to match API
+    const priceItem = priceData.find((p) => p.productId === item.product_id) // Updated to match API
 
     // Calculate total sales (sum of office sales and all vehicle sales)
     const vehicleSalesTotal = Object.values(item.vehicleSales || {}).reduce(
       (sum: number, sales: number) => sum + sales,
       0,
     )
-    const totalSales = item.salesOffice + vehicleSalesTotal
+    const totalSales = (item.sales_office || 0) + vehicleSalesTotal // Updated to match API
 
-    const total = item.opening + item.receipts
+    const total = (item.opening || 0) + (item.receipts || 0) // Updated to match API
     const closing = total - totalSales
-    const balance = closing - item.dispatch
+    const balance = closing - (item.dispatch || 0) // Updated to match API
     const unitPrice = priceItem ? priceItem.baseRate * priceItem.conversionFactor : 0
     const revenue = totalSales * unitPrice
 
     return {
       ...item,
+      productId: item.product_id, // Add this for compatibility
       product: product?.name || "Unknown",
       category: product?.category || "Unknown",
+      salesOffice: item.sales_office || 0, // Add for compatibility
       totalSales,
       vehicleSalesTotal,
       total,
