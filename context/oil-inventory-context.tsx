@@ -134,7 +134,7 @@ export function OilInventoryProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          stock_log_id: stockEntry.id,
+          stock_log_id: stockEntry.product_id, // Use product_id as the identifier
           vehicle_number: vehicle,
           quantity: sales
         })
