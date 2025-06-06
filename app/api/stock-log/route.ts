@@ -1,126 +1,115 @@
 import { NextResponse } from 'next/server'
 import { NextRequest } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { writeFile, readFile, mkdir } from 'fs/promises'
+import { existsSync } from 'fs'
+import path from 'path'
+
+const DATA_DIR = path.join(process.cwd(), 'data')
+const STOCK_FILE = path.join(DATA_DIR, 'stock-log.json')
+
+// Initialize with demo stock data
+const initializeStockData = () => {
+  const stockData = []
+  for (let i = 1; i <= 20; i++) {
+    stockData.push({
+      id: i,
+      product_id: i,
+      date: new Date().toISOString().split('T')[0],
+      opening: Math.floor(Math.random() * 30) + 5,
+      receipts: 0,
+      sales_office: 0,
+      dispatch: 0,
+      vehicleSales: {} // { vehicleNumber: quantity }
+    })
+  }
+  return stockData
+}
+
+async function ensureDataDir() {
+  if (!existsSync(DATA_DIR)) {
+    await mkdir(DATA_DIR, { recursive: true })
+  }
+}
+
+async function getStockData(date: string) {
+  await ensureDataDir()
+  
+  if (!existsSync(STOCK_FILE)) {
+    const initialData = { [date]: initializeStockData() }
+    await writeFile(STOCK_FILE, JSON.stringify(initialData, null, 2))
+    return initialData[date] || []
+  }
+  
+  const data = await readFile(STOCK_FILE, 'utf-8')
+  const allData = JSON.parse(data)
+  
+  if (!allData[date]) {
+    allData[date] = initializeStockData()
+    await writeFile(STOCK_FILE, JSON.stringify(allData, null, 2))
+  }
+  
+  return allData[date] || []
+}
+
+async function updateStockData(date: string, stockData: any[]) {
+  await ensureDataDir()
+  
+  let allData = {}
+  if (existsSync(STOCK_FILE)) {
+    const fileData = await readFile(STOCK_FILE, 'utf-8')
+    allData = JSON.parse(fileData)
+  }
+  
+  allData[date] = stockData
+  await writeFile(STOCK_FILE, JSON.stringify(allData, null, 2))
+}
 
 export async function GET(request: NextRequest) {
-  const supabase = createClient()
-  const searchParams = request.nextUrl.searchParams
-  const date = searchParams.get('date') || new Date().toISOString().split('T')[0]
-  
   try {
-    // Get stock log entries for the specified date
-    const { data: stockLog, error: stockError } = await supabase
-      .from('stock_log')
-      .select('*')
-      .eq('date', date)
-
-    if (stockError) {
-      console.error('Error fetching stock log:', stockError)
-      return NextResponse.json({ error: stockError.message }, { status: 500 })
-    }
-
-    // Get vehicle sales for these stock log entries
-    const stockLogIds = stockLog.map(item => item.id)
+    const searchParams = request.nextUrl.searchParams
+    const date = searchParams.get('date') || new Date().toISOString().split('T')[0]
     
-    let vehicleSales = []
-    if (stockLogIds.length > 0) {
-      const { data: vehicleSalesData, error: vehicleError } = await supabase
-        .from('vehicle_sales')
-        .select(`
-          *,
-          vehicles!inner(number)
-        `)
-        .in('stock_log_id', stockLogIds)
-
-      if (vehicleError) {
-        console.error('Error fetching vehicle sales:', vehicleError)
-      } else {
-        vehicleSales = vehicleSalesData || []
-      }
-    }
-
-    // Combine stock log with vehicle sales
-    const processedStockLog = stockLog.map(item => {
-      const itemVehicleSales = vehicleSales.filter(vs => vs.stock_log_id === item.id)
-      const vehicleSalesMap = {}
-      
-      itemVehicleSales.forEach(vs => {
-        vehicleSalesMap[vs.vehicles.number] = vs.quantity
-      })
-
-      return {
-        ...item,
-        vehicleSales: vehicleSalesMap
-      }
-    })
-
-    return NextResponse.json(processedStockLog)
+    const stockData = await getStockData(date)
+    return NextResponse.json(stockData)
   } catch (error) {
-    console.error('Unexpected error:', error)
+    console.error('Error fetching stock log:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = createClient()
-  
   try {
     const body = await request.json()
     const { product_id, date, field, value } = body
-
-    // Check if stock log entry exists for this product and date
-    const { data: existingEntry, error: checkError } = await supabase
-      .from('stock_log')
-      .select('*')
-      .eq('product_id', product_id)
-      .eq('date', date)
-      .single()
-
-    if (checkError && checkError.code !== 'PGRST116') {
-      console.error('Error checking existing entry:', checkError)
-      return NextResponse.json({ error: checkError.message }, { status: 500 })
-    }
-
-    if (existingEntry) {
-      // Update existing entry
-      const { data, error } = await supabase
-        .from('stock_log')
-        .update({ 
-          [field]: value,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existingEntry.id)
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Error updating stock log:', error)
-        return NextResponse.json({ error: error.message }, { status: 500 })
+    
+    const stockData = await getStockData(date)
+    
+    // Find or create stock entry for this product
+    let stockEntry = stockData.find(item => item.product_id === product_id)
+    
+    if (!stockEntry) {
+      stockEntry = {
+        id: product_id,
+        product_id,
+        date,
+        opening: Math.floor(Math.random() * 30) + 5,
+        receipts: 0,
+        sales_office: 0,
+        dispatch: 0,
+        vehicleSales: {}
       }
-
-      return NextResponse.json(data)
-    } else {
-      // Create new entry
-      const { data, error } = await supabase
-        .from('stock_log')
-        .insert({
-          product_id,
-          date,
-          [field]: value,
-          opening: field === 'opening' ? value : 0
-        })
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Error creating stock log:', error)
-        return NextResponse.json({ error: error.message }, { status: 500 })
-      }
-
-      return NextResponse.json(data)
+      stockData.push(stockEntry)
     }
+    
+    // Update the field
+    stockEntry[field] = value
+    stockEntry.updated_at = new Date().toISOString()
+    
+    await updateStockData(date, stockData)
+    
+    return NextResponse.json(stockEntry)
   } catch (error) {
-    console.error('Unexpected error:', error)
+    console.error('Error updating stock log:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
