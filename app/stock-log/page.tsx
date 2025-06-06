@@ -247,7 +247,7 @@ export default function StockLogPage() {
                       </thead>
                       <tbody>
                         {filteredStockData.map((item) => (
-                          <tr key={item.productId} className="border-b">
+                          <tr key={item.product_id} className="border-b">
                             <td className="p-2">{item.product}</td>
                             <td className="text-center p-2">{item.total - item.totalSales}</td>
                             <td className="text-right p-2">
@@ -255,8 +255,8 @@ export default function StockLogPage() {
                                 type="number"
                                 min="0"
                                 max={item.total - item.totalSales}
-                                value={vehicleSalesForm[item.productId] || ""}
-                                onChange={(e) => handleVehicleSalesFormChange(item.productId, e.target.value)}
+                                value={vehicleSalesForm[item.product_id] || ""}
+                                onChange={(e) => handleVehicleSalesFormChange(item.product_id, e.target.value)}
                                 className="h-8 w-20 text-right ml-auto"
                               />
                             </td>
