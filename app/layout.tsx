@@ -2,9 +2,10 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import Sidebar from "@/components/sidebar"
+import { AuthProvider } from "@/components/auth-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { OilInventoryProvider } from "@/context/oil-inventory-context"
+import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -22,14 +23,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <OilInventoryProvider>
-            <div className="flex h-screen overflow-hidden">
-              <Sidebar />
-              <div className="flex-1 overflow-auto">{children}</div>
-            </div>
-          </OilInventoryProvider>
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+            <OilInventoryProvider>
+              {children}
+              <Toaster />
+            </OilInventoryProvider>
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   )
