@@ -1,75 +1,72 @@
 import { NextResponse } from 'next/server'
 import { NextRequest } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { writeFile, readFile, mkdir } from 'fs/promises'
+import { existsSync } from 'fs'
+import path from 'path'
+
+const DATA_DIR = path.join(process.cwd(), 'data')
+const STOCK_FILE = path.join(DATA_DIR, 'stock-log.json')
+
+async function ensureDataDir() {
+  if (!existsSync(DATA_DIR)) {
+    await mkdir(DATA_DIR, { recursive: true })
+  }
+}
+
+async function updateStockVehicleSales(date: string, stockLogId: number, vehicleNumber: string, quantity: number) {
+  await ensureDataDir()
+  
+  if (!existsSync(STOCK_FILE)) {
+    return null
+  }
+  
+  const fileData = await readFile(STOCK_FILE, 'utf-8')
+  const allData = JSON.parse(fileData)
+  
+  if (!allData[date]) {
+    return null
+  }
+  
+  // Find the stock entry by ID (which matches product_id)
+  const stockEntry = allData[date].find(item => item.id === stockLogId)
+  if (!stockEntry) {
+    return null
+  }
+  
+  // Update vehicle sales
+  if (!stockEntry.vehicleSales) {
+    stockEntry.vehicleSales = {}
+  }
+  
+  stockEntry.vehicleSales[vehicleNumber] = quantity
+  
+  // Save back to file
+  await writeFile(STOCK_FILE, JSON.stringify(allData, null, 2))
+  
+  return stockEntry
+}
 
 export async function POST(request: NextRequest) {
-  const supabase = createClient()
-  
   try {
     const body = await request.json()
     const { stock_log_id, vehicle_number, quantity } = body
+    const date = new Date().toISOString().split('T')[0]
 
-    // Get vehicle ID from vehicle number
-    const { data: vehicle, error: vehicleError } = await supabase
-      .from('vehicles')
-      .select('id')
-      .eq('number', vehicle_number)
-      .single()
-
-    if (vehicleError) {
-      console.error('Error fetching vehicle:', vehicleError)
-      return NextResponse.json({ error: 'Vehicle not found' }, { status: 404 })
+    const result = await updateStockVehicleSales(date, stock_log_id, vehicle_number, quantity)
+    
+    if (!result) {
+      return NextResponse.json({ error: 'Stock entry not found' }, { status: 404 })
     }
 
-    // Check if vehicle sales entry exists
-    const { data: existingEntry, error: checkError } = await supabase
-      .from('vehicle_sales')
-      .select('*')
-      .eq('stock_log_id', stock_log_id)
-      .eq('vehicle_id', vehicle.id)
-      .single()
-
-    if (checkError && checkError.code !== 'PGRST116') {
-      console.error('Error checking existing vehicle sales:', checkError)
-      return NextResponse.json({ error: checkError.message }, { status: 500 })
-    }
-
-    if (existingEntry) {
-      // Update existing entry
-      const { data, error } = await supabase
-        .from('vehicle_sales')
-        .update({ quantity })
-        .eq('id', existingEntry.id)
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Error updating vehicle sales:', error)
-        return NextResponse.json({ error: error.message }, { status: 500 })
-      }
-
-      return NextResponse.json(data)
-    } else {
-      // Create new entry
-      const { data, error } = await supabase
-        .from('vehicle_sales')
-        .insert({
-          stock_log_id,
-          vehicle_id: vehicle.id,
-          quantity
-        })
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Error creating vehicle sales:', error)
-        return NextResponse.json({ error: error.message }, { status: 500 })
-      }
-
-      return NextResponse.json(data)
-    }
+    return NextResponse.json({ 
+      id: `${stock_log_id}-${vehicle_number}`,
+      stock_log_id,
+      vehicle_number,
+      quantity,
+      updated: true
+    })
   } catch (error) {
-    console.error('Unexpected error:', error)
+    console.error('Error updating vehicle sales:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
