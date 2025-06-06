@@ -118,7 +118,7 @@ export default function StockLogPage() {
     const initialFormData = {}
     processedStockData.forEach((item) => {
       if (item.vehicleSales && item.vehicleSales[vehicle]) {
-        initialFormData[item.productId] = item.vehicleSales[vehicle]
+        initialFormData[item.product_id] = item.vehicleSales[vehicle] // Use product_id
       }
     })
 
